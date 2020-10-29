@@ -1338,6 +1338,32 @@ function parseJson (txt, reviver, context) {
 
 /***/ }),
 
+/***/ 82:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Sanitizes an input into a string so it can be passed into issueCommand safely
+ * @param input input to sanitize into a string
+ */
+function toCommandValue(input) {
+    if (input === null || input === undefined) {
+        return '';
+    }
+    else if (typeof input === 'string' || input instanceof String) {
+        return input;
+    }
+    return JSON.stringify(input);
+}
+exports.toCommandValue = toCommandValue;
+//# sourceMappingURL=utils.js.map
+
+/***/ }),
+
 /***/ 87:
 /***/ (function(module) {
 
@@ -1470,20 +1496,56 @@ function legacy (fs) {
 
 /***/ }),
 
+/***/ 102:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+// For internal use, subject to change.
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const fs = __importStar(__webpack_require__(747));
+const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
+function issueCommand(command, message) {
+    const filePath = process.env[`GITHUB_${command}`];
+    if (!filePath) {
+        throw new Error(`Unable to find environment variable for file command ${command}`);
+    }
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Missing file at path: ${filePath}`);
+    }
+    fs.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
+        encoding: 'utf8'
+    });
+}
+exports.issueCommand = issueCommand;
+//# sourceMappingURL=file-command.js.map
+
+/***/ }),
+
 /***/ 104:
 /***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
 
-const core = __webpack_require__(470);
-const fs = __webpack_require__(747);
-const path = __webpack_require__(622);
-const { spawn } = __webpack_require__(129);
-const { Toolkit } = __webpack_require__(461);
+const core = __webpack_require__(470)
+const fs = __webpack_require__(747)
+const path = __webpack_require__(622)
+const { spawn } = __webpack_require__(129)
+const { Toolkit } = __webpack_require__(461)
 
-const MAX_LINES = 5;
+const MAX_LINES = 5
 
 // Get config
-const GH_USERNAME = core.getInput("GH_USERNAME");
-const COMMIT_MSG = core.getInput("COMMIT_MSG");
+const GH_USERNAME = core.getInput('GH_USERNAME')
+const COMMIT_MSG = core.getInput('COMMIT_MSG')
 /**
  * Returns the sentence case representation
  * @param {String} str - the string
@@ -1491,9 +1553,9 @@ const COMMIT_MSG = core.getInput("COMMIT_MSG");
  * @returns {String}
  */
 
-const capitalize = (str) => str.slice(0, 1).toUpperCase() + str.slice(1);
+const capitalize = str => str.slice(0, 1).toUpperCase() + str.slice(1)
 
-const urlPrefix = "https://github.com";
+const urlPrefix = 'https://github.com'
 
 /**
  * Returns a URL in markdown format for PR's and issues
@@ -1502,14 +1564,14 @@ const urlPrefix = "https://github.com";
  * @returns {String}
  */
 
-const toUrlFormat = (item) => {
-  if (typeof item === "object") {
-    return Object.hasOwnProperty.call(item.payload, "issue")
+const toUrlFormat = item => {
+  if (typeof item === 'object') {
+    return Object.hasOwnProperty.call(item.payload, 'issue')
       ? `[#${item.payload.issue.number}](${urlPrefix}/${item.repo.name}/issues/${item.payload.issue.number})`
-      : `[#${item.payload.pull_request.number}](${urlPrefix}/${item.repo.name}/pull/${item.payload.pull_request.number})`;
+      : `[#${item.payload.pull_request.number}](${urlPrefix}/${item.repo.name}/pull/${item.payload.pull_request.number})`
   }
-  return `[${item}](${urlPrefix}/${item})`;
-};
+  return `[${item}](${urlPrefix}/${item})`
+}
 
 /**
  * Execute shell command
@@ -1521,21 +1583,21 @@ const toUrlFormat = (item) => {
 
 const exec = (cmd, args = []) =>
   new Promise((resolve, reject) => {
-    const app = spawn(cmd, args, { stdio: "pipe" });
-    let stdout = "";
-    app.stdout.on("data", (data) => {
-      stdout = data;
-    });
-    app.on("close", (code) => {
-      if (code !== 0 && !stdout.includes("nothing to commit")) {
-        err = new Error(`Invalid status code: ${code}`);
-        err.code = code;
-        return reject(err);
+    const app = spawn(cmd, args, { stdio: 'pipe' })
+    let stdout = ''
+    app.stdout.on('data', data => {
+      stdout = data
+    })
+    app.on('close', code => {
+      if (code !== 0 && !stdout.includes('nothing to commit')) {
+        err = new Error(`Invalid status code: ${code}`)
+        err.code = code
+        return reject(err)
       }
-      return resolve(code);
-    });
-    app.on("error", reject);
-  });
+      return resolve(code)
+    })
+    app.on('error', reject)
+  })
 
 /**
  * Make a commit
@@ -1544,167 +1606,165 @@ const exec = (cmd, args = []) =>
  */
 
 const commitFile = async () => {
-  await exec("git", [
-    "config",
-    "--global",
-    "user.email",
-    "readme-bot@example.com",
-  ]);
-  await exec("git", ["config", "--global", "user.name", "readme-bot"]);
-  await exec("git", ["add", "README.md"]);
-  await exec("git", ["commit", "-m", COMMIT_MSG]);
-  await exec("git", ["push"]);
-};
+  await exec('git', [
+    'config',
+    '--global',
+    'user.email',
+    'readme-bot@example.com',
+  ])
+  await exec('git', ['config', '--global', 'user.name', 'readme-bot'])
+  await exec('git', ['add', 'README.md'])
+  await exec('git', ['commit', '-m', COMMIT_MSG])
+  await exec('git', ['push'])
+}
 
 const serializers = {
-  IssueCommentEvent: (item) => {
+  IssueCommentEvent: item => {
     return `🗣 Commented on ${toUrlFormat(item)} in ${toUrlFormat(
       item.repo.name
-    )}`;
+    )}`
   },
-  IssuesEvent: (item) => {
+  IssuesEvent: item => {
     return `❗️ ${capitalize(item.payload.action)} issue ${toUrlFormat(
       item
-    )} in ${toUrlFormat(item.repo.name)}`;
+    )} in ${toUrlFormat(item.repo.name)}`
   },
-  PullRequestEvent: (item) => {
-    const emoji = item.payload.action === "opened" ? "💪" : "❌";
+  PullRequestEvent: item => {
+    const emoji = item.payload.action === 'opened' ? '💪' : '❌'
     const line = item.payload.pull_request.merged
-      ? "🎉 Merged"
-      : `${emoji} ${capitalize(item.payload.action)}`;
-    return `${line} PR ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`;
+      ? '🎉 Merged'
+      : `${emoji} ${capitalize(item.payload.action)}`
+    return `${line} PR ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`
   },
-};
+}
 
 Toolkit.run(
-  async (tools) => {
+  async tools => {
     // Get the user's public events
-    tools.log.debug(`Getting activity for ${GH_USERNAME}`);
+    tools.log.debug(`Getting activity for ${GH_USERNAME}`)
     const events = await tools.github.activity.listPublicEventsForUser({
       username: GH_USERNAME,
       per_page: 100,
-    });
+    })
     tools.log.debug(
       `Activity for ${GH_USERNAME}, ${events.data.length} events found.`
-    );
+    )
 
     const content = events.data
       // Filter out any boring activity
-      .filter((event) => serializers.hasOwnProperty(event.type))
+      .filter(event => serializers.hasOwnProperty(event.type))
       // We only have five lines to work with
       .slice(0, MAX_LINES)
       // Call the serializer to construct a string
-      .map((item) => serializers[item.type](item));
+      .map(item => serializers[item.type](item))
 
-    const readmeContent = fs.readFileSync("./README.md", "utf-8").split("\n");
+    const readmeContent = fs.readFileSync('./README.md', 'utf-8').split('\n')
 
     // Find the index corresponding to <!--START_SECTION:activity--> comment
     let startIdx = readmeContent.findIndex(
-      (content) => content.trim() === "<!--START_SECTION:activity-->"
-    );
+      content => content.trim() === '<!--START_SECTION:activity-->'
+    )
 
     // Early return in case the <!--START_SECTION:activity--> comment was not found
     if (startIdx === -1) {
       return tools.exit.failure(
         `Couldn't find the <!--START_SECTION:activity--> comment. Exiting!`
-      );
+      )
     }
 
     // Find the index corresponding to <!--END_SECTION:activity--> comment
     const endIdx = readmeContent.findIndex(
-      (content) => content.trim() === "<!--END_SECTION:activity-->"
-    );
+      content => content.trim() === '<!--END_SECTION:activity-->'
+    )
 
     if (!content.length) {
-      tools.exit.failure("No PullRequest/Issue/IssueComment events found");
+      tools.exit.failure('No PullRequest/Issue/IssueComment events found')
     }
 
     if (content.length < 5) {
-      tools.log.info("Found less than 5 activities");
+      tools.log.info('Found less than 5 activities')
     }
 
     if (startIdx !== -1 && endIdx === -1) {
       // Add one since the content needs to be inserted just after the initial comment
-      startIdx++;
+      startIdx++
       content.forEach((line, idx) =>
         readmeContent.splice(startIdx + idx, 0, `${idx + 1}. ${line}`)
-      );
+      )
 
       // Append <!--END_SECTION:activity--> comment
       readmeContent.splice(
         startIdx + content.length,
         0,
-        "<!--END_SECTION:activity-->"
-      );
+        '<!--END_SECTION:activity-->'
+      )
 
       // Update README
-      fs.writeFileSync("./README.md", readmeContent.join("\n"));
+      fs.writeFileSync('./README.md', readmeContent.join('\n'))
 
       // Commit to the remote repository
       try {
-        await commitFile();
+        await commitFile()
       } catch (err) {
-        tools.log.debug("Something went wrong");
-        return tools.exit.failure(err);
+        tools.log.debug('Something went wrong')
+        return tools.exit.failure(err)
       }
-      tools.exit.success("Wrote to README");
+      tools.exit.success('Wrote to README')
     }
 
-    const oldContent = readmeContent.slice(startIdx + 1, endIdx).join("\n");
-    const newContent = content
-      .map((line, idx) => `${idx + 1}. ${line}`)
-      .join("\n");
+    const oldContent = readmeContent.slice(startIdx + 1, endIdx).join('\n')
+    const newContent = content.join('\n')
 
     if (oldContent.trim() === newContent.trim())
-      tools.exit.success("No changes detected");
+      tools.exit.success('No changes detected')
 
-    startIdx++;
+    startIdx++
 
     // Recent GitHub Activity content between the comments
-    const readmeActivitySection = readmeContent.slice(startIdx, endIdx);
+    const readmeActivitySection = readmeContent.slice(startIdx, endIdx)
     if (!readmeActivitySection.length) {
       content.some((line, idx) => {
         // User doesn't have 5 public events
         if (!line) {
-          return true;
+          return true
         }
-        readmeContent.splice(startIdx + idx, 0, `${idx + 1}. ${line}`);
-      });
-      tools.log.success("Wrote to README");
+        readmeContent.splice(startIdx + idx, 0, `${idx + 1}. ${line}`)
+      })
+      tools.log.success('Wrote to README')
     } else {
       // It is likely that a newline is inserted after the <!--START_SECTION:activity--> comment (code formatter)
-      let count = 0;
+      let count = 0
 
       readmeActivitySection.some((line, idx) => {
         // User doesn't have 5 public events
         if (!content[count]) {
-          return true;
+          return true
         }
-        if (line !== "") {
-          readmeContent[startIdx + idx] = `${count + 1}. ${content[count]}`;
-          count++;
+        if (line !== '') {
+          readmeContent[startIdx + idx] = `${count + 1}. ${content[count]}`
+          count++
         }
-      });
-      tools.log.success("Updated README with the recent activity");
+      })
+      tools.log.success('Updated README with the recent activity')
     }
 
     // Update README
-    fs.writeFileSync("./README.md", readmeContent.join("\n"));
+    fs.writeFileSync('./README.md', readmeContent.join('\n'))
 
     // Commit to the remote repository
     try {
-      await commitFile();
+      await commitFile()
     } catch (err) {
-      tools.log.debug("Something went wrong");
-      return tools.exit.failure(err);
+      tools.log.debug('Something went wrong')
+      return tools.exit.failure(err)
     }
-    tools.exit.success("Pushed to remote repository");
+    tools.exit.success('Pushed to remote repository')
   },
   {
-    event: ["schedule", "workflow_dispatch"],
-    secrets: ["GITHUB_TOKEN"],
+    event: ['schedule', 'workflow_dispatch'],
+    secrets: ['GITHUB_TOKEN'],
   }
-);
+)
 
 
 /***/ }),
@@ -4794,7 +4854,7 @@ module.exports.sync = fp => {
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-const VERSION = "2.2.3";
+const VERSION = "2.4.0";
 
 /**
  * Some “list” response that can be paginated have a different response structure
@@ -5055,6 +5115,52 @@ module.exports.sync = (filename, opts) => {
 		dir = path.dirname(dir);
 	}
 };
+
+
+/***/ }),
+
+/***/ 356:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+/*!
+ * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+
+function isObject(o) {
+  return Object.prototype.toString.call(o) === '[object Object]';
+}
+
+function isPlainObject(o) {
+  var ctor,prot;
+
+  if (isObject(o) === false) return false;
+
+  // If has modified constructor
+  ctor = o.constructor;
+  if (ctor === undefined) return true;
+
+  // If has modified prototype
+  prot = ctor.prototype;
+  if (isObject(prot) === false) return false;
+
+  // If constructor does not have an Object-specific method
+  if (prot.hasOwnProperty('isPrototypeOf') === false) {
+    return false;
+  }
+
+  // Most likely a plain Object
+  return true;
+}
+
+exports.isPlainObject = isPlainObject;
 
 
 /***/ }),
@@ -5346,6 +5452,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
 /**
  * Commands
  *
@@ -5399,28 +5506,14 @@ class Command {
         return cmdStr;
     }
 }
-/**
- * Sanitizes an input into a string so it can be passed into issueCommand safely
- * @param input input to sanitize into a string
- */
-function toCommandValue(input) {
-    if (input === null || input === undefined) {
-        return '';
-    }
-    else if (typeof input === 'string' || input instanceof String) {
-        return input;
-    }
-    return JSON.stringify(input);
-}
-exports.toCommandValue = toCommandValue;
 function escapeData(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A');
 }
 function escapeProperty(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A')
@@ -5439,7 +5532,7 @@ function escapeProperty(s) {
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var universalUserAgent = __webpack_require__(796);
+var universalUserAgent = __webpack_require__(718);
 var beforeAfterHook = __webpack_require__(500);
 var request = __webpack_require__(753);
 var graphql = __webpack_require__(898);
@@ -6174,6 +6267,12 @@ function convertBody(buffer, headers) {
 	// html4
 	if (!res && str) {
 		res = /<meta[\s]+?http-equiv=(['"])content-type\1[\s]+?content=(['"])(.+?)\2/i.exec(str);
+		if (!res) {
+			res = /<meta[\s]+?content=(['"])(.+?)\1[\s]+?http-equiv=(['"])content-type\3/i.exec(str);
+			if (res) {
+				res.pop(); // drop last quote
+			}
+		}
 
 		if (res) {
 			res = /charset=(.*)/i.exec(res.pop());
@@ -7181,7 +7280,7 @@ function fetch(url, opts) {
 				// HTTP fetch step 5.5
 				switch (request.redirect) {
 					case 'error':
-						reject(new FetchError(`redirect mode is set to error: ${request.url}`, 'no-redirect'));
+						reject(new FetchError(`uri requested responds with a redirect, redirect mode is set to error: ${request.url}`, 'no-redirect'));
 						finalize();
 						return;
 					case 'manual':
@@ -7220,7 +7319,8 @@ function fetch(url, opts) {
 							method: request.method,
 							body: request.body,
 							signal: request.signal,
-							timeout: request.timeout
+							timeout: request.timeout,
+							size: request.size
 						};
 
 						// HTTP-redirect fetch step 9
@@ -7836,6 +7936,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_1 = __webpack_require__(431);
+const file_command_1 = __webpack_require__(102);
+const utils_1 = __webpack_require__(82);
 const os = __importStar(__webpack_require__(87));
 const path = __importStar(__webpack_require__(622));
 /**
@@ -7862,9 +7964,17 @@ var ExitCode;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function exportVariable(name, val) {
-    const convertedVal = command_1.toCommandValue(val);
+    const convertedVal = utils_1.toCommandValue(val);
     process.env[name] = convertedVal;
-    command_1.issueCommand('set-env', { name }, convertedVal);
+    const filePath = process.env['GITHUB_ENV'] || '';
+    if (filePath) {
+        const delimiter = '_GitHubActionsFileCommandDelimeter_';
+        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
+        file_command_1.issueCommand('ENV', commandValue);
+    }
+    else {
+        command_1.issueCommand('set-env', { name }, convertedVal);
+    }
 }
 exports.exportVariable = exportVariable;
 /**
@@ -7880,7 +7990,13 @@ exports.setSecret = setSecret;
  * @param inputPath
  */
 function addPath(inputPath) {
-    command_1.issueCommand('add-path', {}, inputPath);
+    const filePath = process.env['GITHUB_PATH'] || '';
+    if (filePath) {
+        file_command_1.issueCommand('PATH', inputPath);
+    }
+    else {
+        command_1.issueCommand('add-path', {}, inputPath);
+    }
     process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
 }
 exports.addPath = addPath;
@@ -10940,62 +11056,6 @@ exports.Deprecation = Deprecation;
 
 /***/ }),
 
-/***/ 696:
-/***/ (function(module) {
-
-"use strict";
-
-
-/*!
- * isobject <https://github.com/jonschlinkert/isobject>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-function isObject(val) {
-  return val != null && typeof val === 'object' && Array.isArray(val) === false;
-}
-
-/*!
- * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-function isObjectObject(o) {
-  return isObject(o) === true
-    && Object.prototype.toString.call(o) === '[object Object]';
-}
-
-function isPlainObject(o) {
-  var ctor,prot;
-
-  if (isObjectObject(o) === false) return false;
-
-  // If has modified constructor
-  ctor = o.constructor;
-  if (typeof ctor !== 'function') return false;
-
-  // If has modified prototype
-  prot = ctor.prototype;
-  if (isObjectObject(prot) === false) return false;
-
-  // If constructor does not have an Object-specific method
-  if (prot.hasOwnProperty('isPrototypeOf') === false) {
-    return false;
-  }
-
-  // Most likely a plain Object
-  return true;
-}
-
-module.exports = isPlainObject;
-
-
-/***/ }),
-
 /***/ 697:
 /***/ (function(module) {
 
@@ -11015,6 +11075,36 @@ module.exports = (promise, onFinally) => {
 		})
 	);
 };
+
+
+/***/ }),
+
+/***/ 718:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var osName = _interopDefault(__webpack_require__(2));
+
+function getUserAgent() {
+  try {
+    return `Node.js/${process.version.substr(1)} (${osName()}; ${process.arch})`;
+  } catch (error) {
+    if (/wmic os get Caption/.test(error.message)) {
+      return "Windows <version undetectable>";
+    }
+
+    return "<environment undetectable>";
+  }
+}
+
+exports.getUserAgent = getUserAgent;
+//# sourceMappingURL=index.js.map
 
 
 /***/ }),
@@ -11102,18 +11192,18 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var endpoint = __webpack_require__(892);
 var universalUserAgent = __webpack_require__(796);
-var isPlainObject = _interopDefault(__webpack_require__(696));
+var isPlainObject = __webpack_require__(356);
 var nodeFetch = _interopDefault(__webpack_require__(454));
 var requestError = __webpack_require__(463);
 
-const VERSION = "5.4.5";
+const VERSION = "5.4.9";
 
 function getBufferResponse(response) {
   return response.arrayBuffer();
 }
 
 function fetchWrapper(requestOptions) {
-  if (isPlainObject(requestOptions.body) || Array.isArray(requestOptions.body)) {
+  if (isPlainObject.isPlainObject(requestOptions.body) || Array.isArray(requestOptions.body)) {
     requestOptions.body = JSON.stringify(requestOptions.body);
   }
 
@@ -11352,27 +11442,23 @@ module.exports = function (x) {
 /***/ }),
 
 /***/ 796:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
+/***/ (function(__unusedmodule, exports) {
 
 "use strict";
 
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var osName = _interopDefault(__webpack_require__(2));
-
 function getUserAgent() {
-  try {
-    return `Node.js/${process.version.substr(1)} (${osName()}; ${process.arch})`;
-  } catch (error) {
-    if (/wmic os get Caption/.test(error.message)) {
-      return "Windows <version undetectable>";
-    }
-
-    return "<environment undetectable>";
+  if (typeof navigator === "object" && "userAgent" in navigator) {
+    return navigator.userAgent;
   }
+
+  if (typeof process === "object" && "version" in process) {
+    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
+  }
+
+  return "<environment undetectable>";
 }
 
 exports.getUserAgent = getUserAgent;
@@ -14130,9 +14216,7 @@ exports.Octokit = Octokit;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var isPlainObject = _interopDefault(__webpack_require__(696));
+var isPlainObject = __webpack_require__(356);
 var universalUserAgent = __webpack_require__(796);
 
 function lowercaseKeys(object) {
@@ -14149,7 +14233,7 @@ function lowercaseKeys(object) {
 function mergeDeep(defaults, options) {
   const result = Object.assign({}, defaults);
   Object.keys(options).forEach(key => {
-    if (isPlainObject(options[key])) {
+    if (isPlainObject.isPlainObject(options[key])) {
       if (!(key in defaults)) Object.assign(result, {
         [key]: options[key]
       });else result[key] = mergeDeep(defaults[key], options[key]);
@@ -14160,6 +14244,16 @@ function mergeDeep(defaults, options) {
     }
   });
   return result;
+}
+
+function removeUndefinedProperties(obj) {
+  for (const key in obj) {
+    if (obj[key] === undefined) {
+      delete obj[key];
+    }
+  }
+
+  return obj;
 }
 
 function merge(defaults, route, options) {
@@ -14176,7 +14270,10 @@ function merge(defaults, route, options) {
   } // lowercase header names before merging with defaults to avoid duplicates
 
 
-  options.headers = lowercaseKeys(options.headers);
+  options.headers = lowercaseKeys(options.headers); // remove properties with undefined values before merging
+
+  removeUndefinedProperties(options);
+  removeUndefinedProperties(options.headers);
   const mergedOptions = mergeDeep(defaults || {}, options); // mediaType.previews arrays are merged, instead of overwritten
 
   if (defaults && defaults.mediaType.previews.length) {
@@ -14398,7 +14495,7 @@ function parse(options) {
   // https://fetch.spec.whatwg.org/#methods
   let method = options.method.toUpperCase(); // replace :varname with {varname} to make it RFC 6570 compatible
 
-  let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{+$1}");
+  let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}");
   let headers = Object.assign({}, options.headers);
   let body;
   let parameters = omit(options, ["method", "baseUrl", "url", "headers", "request", "mediaType"]); // extract variable names from URL to calculate remaining variables later
@@ -14412,9 +14509,9 @@ function parse(options) {
 
   const omittedParameters = Object.keys(options).filter(option => urlVariableNames.includes(option)).concat("baseUrl");
   const remainingParameters = omit(parameters, omittedParameters);
-  const isBinaryRequset = /application\/octet-stream/i.test(headers.accept);
+  const isBinaryRequest = /application\/octet-stream/i.test(headers.accept);
 
-  if (!isBinaryRequset) {
+  if (!isBinaryRequest) {
     if (options.mediaType.format) {
       // e.g. application/vnd.github.v3+json => application/vnd.github.v3.raw
       headers.accept = headers.accept.split(/,/).map(preview => preview.replace(/application\/vnd(\.\w+)(\.v3)?(\.\w+)?(\+json)?$/, `application/vnd$1$2.${options.mediaType.format}`)).join(",");
@@ -14483,7 +14580,7 @@ function withDefaults(oldDefaults, newDefaults) {
   });
 }
 
-const VERSION = "6.0.3";
+const VERSION = "6.0.8";
 
 const userAgent = `octokit-endpoint.js/${VERSION} ${universalUserAgent.getUserAgent()}`; // DEFAULTS has all properties set that EndpointOptions has, except url.
 // So we use RequestParameters and add method as additional required property.
@@ -14520,13 +14617,16 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var request = __webpack_require__(753);
 var universalUserAgent = __webpack_require__(796);
 
-const VERSION = "4.5.1";
+const VERSION = "4.5.6";
 
 class GraphqlError extends Error {
   constructor(request, response) {
     const message = response.data.errors[0].message;
     super(message);
     Object.assign(this, response.data);
+    Object.assign(this, {
+      headers: response.headers
+    });
     this.name = "GraphqlError";
     this.request = request; // Maintains proper stack trace (only available on V8)
 
@@ -14540,13 +14640,18 @@ class GraphqlError extends Error {
 }
 
 const NON_VARIABLE_OPTIONS = ["method", "baseUrl", "url", "headers", "request", "query", "mediaType"];
+const GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
 function graphql(request, query, options) {
-  options = typeof query === "string" ? options = Object.assign({
+  if (typeof query === "string" && options && "query" in options) {
+    return Promise.reject(new Error(`[@octokit/graphql] "query" cannot be used as variable name`));
+  }
+
+  const parsedOptions = typeof query === "string" ? Object.assign({
     query
-  }, options) : options = query;
-  const requestOptions = Object.keys(options).reduce((result, key) => {
+  }, options) : query;
+  const requestOptions = Object.keys(parsedOptions).reduce((result, key) => {
     if (NON_VARIABLE_OPTIONS.includes(key)) {
-      result[key] = options[key];
+      result[key] = parsedOptions[key];
       return result;
     }
 
@@ -14554,12 +14659,27 @@ function graphql(request, query, options) {
       result.variables = {};
     }
 
-    result.variables[key] = options[key];
+    result.variables[key] = parsedOptions[key];
     return result;
-  }, {});
+  }, {}); // workaround for GitHub Enterprise baseUrl set with /api/v3 suffix
+  // https://github.com/octokit/auth-app.js/issues/111#issuecomment-657610451
+
+  const baseUrl = parsedOptions.baseUrl || request.endpoint.DEFAULTS.baseUrl;
+
+  if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
+    requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql");
+  }
+
   return request(requestOptions).then(response => {
     if (response.data.errors) {
+      const headers = {};
+
+      for (const key of Object.keys(response.headers)) {
+        headers[key] = response.headers[key];
+      }
+
       throw new GraphqlError(requestOptions, {
+        headers,
         data: response.data
       });
     }
@@ -14610,7 +14730,7 @@ exports.withCustomRequest = withCustomRequest;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-const VERSION = "1.0.0";
+const VERSION = "1.0.2";
 
 /**
  * @param octokit Octokit instance
@@ -15326,7 +15446,7 @@ module.exports = options => {
 /***/ 969:
 /***/ (function(module) {
 
-module.exports = {"_from":"signale@^1.4.0","_id":"signale@1.4.0","_inBundle":false,"_integrity":"sha512-iuh+gPf28RkltuJC7W5MRi6XAjTDCAPC/prJUpQoG4vIP3MJZ+GTydVnodXA7pwvTKb2cA0m9OFZW/cdWy/I/w==","_location":"/signale","_phantomChildren":{},"_requested":{"type":"range","registry":true,"raw":"signale@^1.4.0","name":"signale","escapedName":"signale","rawSpec":"^1.4.0","saveSpec":null,"fetchSpec":"^1.4.0"},"_requiredBy":["/actions-toolkit"],"_resolved":"https://registry.npmjs.org/signale/-/signale-1.4.0.tgz","_shasum":"c4be58302fb0262ac00fc3d886a7c113759042f1","_spec":"signale@^1.4.0","_where":"/Users/jamesgeorge007/CodeSpace/scripting/JavaScript/GitHub-Actions/github-activity-readme/node_modules/actions-toolkit","author":{"name":"Klaus Sinani","email":"klaussinani@gmail.com","url":"https://klaussinani.github.io"},"bugs":{"url":"https://github.com/klaussinani/signale/issues"},"bundleDependencies":false,"dependencies":{"chalk":"^2.3.2","figures":"^2.0.0","pkg-conf":"^2.1.0"},"deprecated":false,"description":"👋 Hackable console logger","devDependencies":{"xo":"*"},"engines":{"node":">=6"},"files":["index.js","signale.js","types.js"],"homepage":"https://github.com/klaussinani/signale#readme","keywords":["hackable","colorful","console","logger"],"license":"MIT","maintainers":[{"name":"Mario Sinani","email":"mariosinani@protonmail.ch","url":"https://mariocfhq.github.io"}],"name":"signale","options":{"default":{"displayScope":true,"displayBadge":true,"displayDate":false,"displayFilename":false,"displayLabel":true,"displayTimestamp":false,"underlineLabel":true,"underlineMessage":false,"underlinePrefix":false,"underlineSuffix":false,"uppercaseLabel":false}},"repository":{"type":"git","url":"git+https://github.com/klaussinani/signale.git"},"scripts":{"test":"xo"},"version":"1.4.0","xo":{"space":2}};
+module.exports = {"name":"signale","version":"1.4.0","description":"👋 Hackable console logger","license":"MIT","repository":"klaussinani/signale","author":{"name":"Klaus Sinani","email":"klaussinani@gmail.com","url":"https://klaussinani.github.io"},"maintainers":[{"name":"Mario Sinani","email":"mariosinani@protonmail.ch","url":"https://mariocfhq.github.io"}],"engines":{"node":">=6"},"files":["index.js","signale.js","types.js"],"keywords":["hackable","colorful","console","logger"],"scripts":{"test":"xo"},"dependencies":{"chalk":"^2.3.2","figures":"^2.0.0","pkg-conf":"^2.1.0"},"devDependencies":{"xo":"*"},"options":{"default":{"displayScope":true,"displayBadge":true,"displayDate":false,"displayFilename":false,"displayLabel":true,"displayTimestamp":false,"underlineLabel":true,"underlineMessage":false,"underlinePrefix":false,"underlineSuffix":false,"uppercaseLabel":false}},"xo":{"space":2}};
 
 /***/ }),
 
